@@ -899,12 +899,22 @@ namespace winrt::TerminalApp::implementation
     void App::_UpdateTitle(std::shared_ptr<Tab> tab)
     {
         auto newTabTitle = tab->GetFocusedTitle();
-        tab->SetTabText(newTabTitle);
+        const auto lastFocusedProfile = tab->GetFocusedProfile().value();
+        const auto* const matchingProfile = _settings->FindProfile(lastFocusedProfile);
+
+        const auto suppressApplicationTitle = matchingProfile->GetSuppressApplicationTitle();
+
+        // Checks if suppressApplicationTitle has been set in the profile settings
+        // and updates accordingly.
+
+        const auto newActualTitle = suppressApplicationTitle.empty() ? newTabTitle : suppressApplicationTitle;
+
+        tab->SetTabText(winrt::to_hstring(newActualTitle.data()));
 
         if (_settings->GlobalSettings().GetShowTitleInTitlebar() &&
             tab->IsFocused())
         {
-            _titleChangeHandlers(newTabTitle);
+            _titleChangeHandlers(newActualTitle);
         }
     }
 
